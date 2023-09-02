@@ -1,6 +1,6 @@
+from typing import Any, Optional
 import lightning as L
 
-# from lightning.pytorch.loggers.wandb import WandbLogger
 from timm.models import create_model
 
 import torch
@@ -31,6 +31,9 @@ class Model(L.LightningModule):
         self.kidney_accuracy = Accuracy(task="multiclass", num_classes=3)
         self.liver_accuracy = Accuracy(task="multiclass", num_classes=3)
         self.spleen_accuracy = Accuracy(task="multiclass", num_classes=3)
+
+        # save hyper-parameters to self.hparams (auto-logged by W&B)
+        self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
         (
@@ -107,6 +110,9 @@ class Model(L.LightningModule):
         self.log("acc_spleen", self.spleen_accuracy)
 
         return loss_total
+
+    def validation_step(self, batch, batch_idx):
+        return self.training_step(batch=batch, batch_idx=batch_idx)
 
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=1e-3)
