@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torchmetrics.classification import Accuracy
 
 
-class Model1(L.LightningModule):
+class Model(L.LightningModule):
     def __init__(self):
         super().__init__()
         self.conv2d = nn.Conv2d(1, 3, kernel_size=3)
