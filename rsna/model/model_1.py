@@ -75,12 +75,17 @@ class Model(L.LightningModule):
         y_liver             = liver * self.head["liver"](x)
         y_spleen            = spleen * self.head["spleen"](x)
         
+        groundtruth_bowel   = bowel * bowel_healthy
+        groundtruth_kidney  = right_kidney * left_kidney * torch.stack([kidney_healthy, kidney_low, kidney_high], dim=-1)
+        groundtruth_liver   = liver * torch.stack([liver_healthy, liver_low, liver_high], dim=-1)
+        groundtruth_spleen  = spleen * torch.stack([spleen_healthy, spleen_low, spleen_high], dim=-1)
+        
         # Compute loss
-        loss_bowel          = F.binary_cross_entropy(y_bowel, bowel * bowel_healthy)
+        loss_bowel          = F.binary_cross_entropy(y_bowel, groundtruth_bowel)
         loss_extravasation  = F.binary_cross_entropy(y_extravasation, extravasation_healthy)
-        loss_kidney         = F.cross_entropy(y_kidney, right_kidney * left_kidney * torch.stack([kidney_healthy, kidney_low, kidney_high], dim=-1))
-        loss_liver          = F.cross_entropy(y_liver, liver * torch.stack([liver_healthy, liver_low, liver_high], dim=-1))
-        loss_spleen         = F.cross_entropy(y_spleen, spleen * torch.stack([spleen_healthy, spleen_low, spleen_high], dim=-1))
+        loss_kidney         = F.cross_entropy(y_kidney, groundtruth_kidney)
+        loss_liver          = F.cross_entropy(y_liver, groundtruth_liver)
+        loss_spleen         = F.cross_entropy(y_spleen, groundtruth_spleen)
 
         # Element sum
         loss_total = (
@@ -88,11 +93,11 @@ class Model(L.LightningModule):
         )
         
         # Compute accuracy
-        self.bowel_accuracy(y_bowel, bowel_healthy)
+        self.bowel_accuracy(y_bowel, groundtruth_bowel)
         self.extravasation_accuracy(y_extravasation, extravasation_healthy)
-        self.kidney_accuracy(y_kidney, kidney_healthy)
-        self.liver_accuracy(y_liver, liver_healthy)
-        self.spleen_accuracy(y_spleen, spleen_healthy)
+        self.kidney_accuracy(y_kidney, groundtruth_kidney)
+        self.liver_accuracy(y_liver, groundtruth_liver)
+        self.spleen_accuracy(y_spleen, groundtruth_spleen)
         # fmt: on
 
         # logging
@@ -112,6 +117,7 @@ class Model(L.LightningModule):
         return loss_total
 
     def validation_step(self, batch, batch_idx):
+        # with torch.no_grad():
         return self.training_step(batch=batch, batch_idx=batch_idx)
 
     def configure_optimizers(self):
