@@ -1,5 +1,7 @@
 """
 Instruction Image Model with organ presence
+Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
+Dimension: 2D
 Backbone: ResnetV2 (100 output)
 Dataset: SegmentationDatasetV2
 """
@@ -24,12 +26,12 @@ class Model(L.LightningModule):
         # TODO: head to optimise (concat in one linear)
         self.head = nn.ModuleDict(
             {
-                "bowel": nn.Sequential(nn.Linear(13, 1), nn.Sigmoid()),
-                "extravasation": nn.Sequential(nn.Linear(13, 1), nn.Sigmoid()),
-                "right_kidney": nn.Linear(13, 3),
-                "left_kidney": nn.Linear(13, 3),
-                "liver": nn.Linear(13, 3),
-                "spleen": nn.Linear(13, 3),
+                "bowel": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
+                "extravasation": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
+                "right_kidney": nn.Linear(100, 3),
+                "left_kidney": nn.Linear(100, 3),
+                "liver": nn.Linear(100, 3),
+                "spleen": nn.Linear(100, 3),
             }
         )
 

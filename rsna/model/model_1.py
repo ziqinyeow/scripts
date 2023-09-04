@@ -1,5 +1,7 @@
 """
 Instruction Image Model with organ presence
+Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
+Dimension: 2D
 Backbone: FastVIT (1000 output)
 Dataset: SegmentationDataset
 """
