@@ -2,7 +2,7 @@
 Instruction Image Model with organ presence
 Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
 Dimension: 2D
-Backbone: ResnetV2 (100 output)
+Backbone: ResnetV2 (Pretrained - Unfreeze) (100 output)
 Dataset: SegmentationDatasetV2
 """
 from typing import Any, Optional

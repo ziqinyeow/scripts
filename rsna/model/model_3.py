@@ -2,8 +2,8 @@
 Instruction Image Model with organ presence
 Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
 Dimension: 2D
-Backbone: FastVIT (1000 output)
-Dataset: SegmentationDataset (Unormalized)
+Backbone: FastVIT (Pretrained - Unfreeze) (100 output)
+Dataset: SegmentationDatasetV2
 """
 from typing import Any, Optional
 import lightning as L
@@ -20,16 +20,18 @@ class Model(L.LightningModule):
     def __init__(self):
         super().__init__()
         self.conv2d = nn.Conv2d(1, 3, kernel_size=3)
-        self.backbone = create_model("fastvit_ma36")  # output: (B, 1000)
+        self.backbone = create_model(
+            "fastvit_ma36", pretrained=True, num_classes=100
+        )  # output: (B, 1000)
         # TODO: head to optimise (concat in one linear)
         self.head = nn.ModuleDict(
             {
-                "bowel": nn.Sequential(nn.Linear(1000, 1), nn.Sigmoid()),
-                "extravasation": nn.Sequential(nn.Linear(1000, 1), nn.Sigmoid()),
-                "right_kidney": nn.Linear(1000, 3),
-                "left_kidney": nn.Linear(1000, 3),
-                "liver": nn.Linear(1000, 3),
-                "spleen": nn.Linear(1000, 3),
+                "bowel": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
+                "extravasation": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
+                "right_kidney": nn.Linear(100, 3),
+                "left_kidney": nn.Linear(100, 3),
+                "liver": nn.Linear(100, 3),
+                "spleen": nn.Linear(100, 3),
             }
         )
 
@@ -53,6 +55,7 @@ class Model(L.LightningModule):
     def step(self, batch, batch_idx, train=True):
         (
             image,
+            mask,
             # 1 if liver is in the image else 0, same goes to others
             liver,
             spleen,
