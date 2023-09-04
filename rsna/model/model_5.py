@@ -2,7 +2,7 @@
 Instruction Image Model with organ presence
 Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
 Dimension: 2D
-Backbone: ResnetV2 50x3_bit (Pretrained - Unfreeze) (100 output)
+Backbone: ResnetV2 50x3_frn (Pretrained - Unfreeze) (100 output)
 Dataset: SegmentationDatasetV2
 """
 from typing import Any, Optional
@@ -21,7 +21,7 @@ class Model(L.LightningModule):
         super().__init__()
         self.conv2d = nn.Conv2d(1, 3, kernel_size=3)
         self.backbone = create_model(
-            "resnetv2_50x3_bit", pretrained=True, num_classes=100
+            "resnetv2_50d_frn", pretrained=True, num_classes=100
         )  # output: (B, 1000)
         # TODO: head to optimise (concat in one linear)
         self.head = nn.ModuleDict(

@@ -85,15 +85,6 @@ class SegmentationDataset(data.Dataset):
         )
 
 
-def split(
-    dataset, train_size: float = 0.8, generator: Optional[torch.Generator] = None
-):
-    if not generator:
-        generator = torch.Generator().manual_seed(42)
-
-    return random_split(dataset, [train_size, 1 - train_size], generator=generator)
-
-
 class SegmentationDatasetV2(data.Dataset):
     def __init__(self, transform=None, dimension: Literal["2d"] = "2d"):
         self.transform = transform if transform else T.Resize((512, 512))
