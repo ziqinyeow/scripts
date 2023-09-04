@@ -2,7 +2,7 @@
 Instruction Image Model with organ presence
 Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
 Dimension: 2D
-Backbone: ResnetV2 50x3_frn (No Pretrained - no weights available) (100 output)
+Backbone: Sam Base (Pretrained - Unfreeze - fine tune only head) (256 output)
 Dataset: SegmentationDatasetV2
 """
 from typing import Any, Optional
@@ -21,17 +21,17 @@ class Model(L.LightningModule):
         super().__init__()
         self.conv2d = nn.Conv2d(1, 3, kernel_size=3)
         self.backbone = create_model(
-            "resnetv2_50d_frn", pretrained=False, num_classes=100
+            "samvit_base_patch16", pretrained=True
         )  # output: (B, 1000)
         # TODO: head to optimise (concat in one linear)
         self.head = nn.ModuleDict(
             {
-                "bowel": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
-                "extravasation": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
-                "right_kidney": nn.Linear(100, 3),
-                "left_kidney": nn.Linear(100, 3),
-                "liver": nn.Linear(100, 3),
-                "spleen": nn.Linear(100, 3),
+                "bowel": nn.Sequential(nn.Linear(256, 1), nn.Sigmoid()),
+                "extravasation": nn.Sequential(nn.Linear(256, 1), nn.Sigmoid()),
+                "right_kidney": nn.Linear(256, 3),
+                "left_kidney": nn.Linear(256, 3),
+                "liver": nn.Linear(256, 3),
+                "spleen": nn.Linear(256, 3),
             }
         )
 
@@ -77,8 +77,10 @@ class Model(L.LightningModule):
             spleen_low,
             spleen_high,
         ) = batch
+        x = self.conv2d(image)
 
-        x = self.backbone(self.conv2d(image))
+        with torch.no_grad():
+            x = self.backbone(x)
 
         # fmt: off
         right_kidney        = right_kidney.unsqueeze(-1)
