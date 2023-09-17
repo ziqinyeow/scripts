@@ -236,9 +236,11 @@ class VideoSegmentationDataset(data.IterableDataset):
                 masks = torch.from_numpy(masks)
                 masks = self.transform(im) / 5
 
-                yield (im, masks, *torch.tensor_split(labels[0:5])), torch.tensor_split(
-                    labels[5:]
-                )
+                yield (
+                    im,
+                    masks,
+                    *torch.tensor_split(labels[0:5], 5),
+                ), torch.tensor_split(labels[5:], 13)
 
     def __iter__(self):
         return self.generator()
