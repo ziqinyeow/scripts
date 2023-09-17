@@ -2,8 +2,8 @@
 Instruction Image Model with organ presence
 Image Only: Yes (But with Yes/No Label for Liver/Bowel/Kidney... Presences)
 Dimension: 2D
-Backbone: FastVIT (1000 output)
-Dataset: SegmentationDataset (Unormalized)
+Backbone: Sam Base (Pretrained - Unfreeze - fine tune only head with projection layer) (256 output)
+Dataset: SegmentationDatasetV2
 """
 from typing import Any, Optional
 import lightning as L
@@ -20,16 +20,21 @@ class Model(L.LightningModule):
     def __init__(self):
         super().__init__()
         self.conv2d = nn.Conv2d(1, 3, kernel_size=3)
-        self.backbone = create_model("fastvit_ma36")  # output: (B, 1000)
+        self.backbone = create_model("resnet152", pretrained=True)  # output: (B, 256)
+
+        modules = list(self.backbone.children())[:-1]  # delete the last fc layer.
+        self.backbone = nn.Sequential(*modules)
+
         # TODO: head to optimise (concat in one linear)
+        self.proj = nn.Linear(256, 100)
         self.head = nn.ModuleDict(
             {
-                "bowel": nn.Sequential(nn.Linear(1000, 1), nn.Sigmoid()),
-                "extravasation": nn.Sequential(nn.Linear(1000, 1), nn.Sigmoid()),
-                "right_kidney": nn.Linear(1000, 3),
-                "left_kidney": nn.Linear(1000, 3),
-                "liver": nn.Linear(1000, 3),
-                "spleen": nn.Linear(1000, 3),
+                "bowel": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
+                "extravasation": nn.Sequential(nn.Linear(100, 1), nn.Sigmoid()),
+                "right_kidney": nn.Linear(100, 3),
+                "left_kidney": nn.Linear(100, 3),
+                "liver": nn.Linear(100, 3),
+                "spleen": nn.Linear(100, 3),
             }
         )
 
@@ -53,6 +58,7 @@ class Model(L.LightningModule):
     def step(self, batch, batch_idx, train=True):
         (
             image,
+            mask,
             # 1 if liver is in the image else 0, same goes to others
             liver,
             spleen,
@@ -74,8 +80,12 @@ class Model(L.LightningModule):
             spleen_low,
             spleen_high,
         ) = batch
+        x = self.conv2d(image)
 
-        x = self.backbone(self.conv2d(image))  # [B, 1000]
+        with torch.no_grad():
+            x = self.backbone(x)
+
+        x = self.proj(x)
 
         # fmt: off
         right_kidney        = right_kidney.unsqueeze(-1)

@@ -22,7 +22,7 @@ class Model(L.LightningModule):
         self.conv2d = nn.Conv2d(1, 3, kernel_size=3)
         self.backbone = create_model(
             "fastvit_ma36", pretrained=True, num_classes=100
-        )  # output: (B, 1000)
+        )  # output: (B, 100)
         # TODO: head to optimise (concat in one linear)
         self.head = nn.ModuleDict(
             {
