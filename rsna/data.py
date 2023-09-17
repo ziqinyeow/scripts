@@ -166,6 +166,7 @@ class VideoSegmentationDataset(data.IterableDataset):
     def __init__(
         self,
         d=16,
+        size=512,
         train=True,
         transform=None,
         images="images/",
@@ -173,9 +174,10 @@ class VideoSegmentationDataset(data.IterableDataset):
         metadata="metadata.csv",
     ):
         self.d = d
+        self.size = size
         self.train = train
         self.transform = (
-            transform if transform else T.Resize((512, 512), antialias=True)
+            transform if transform else T.Resize((self.size, self.size), antialias=True)
         )
         self.metadata = pd.read_csv(metadata)
         self.images, self.masks = images, masks
@@ -234,7 +236,9 @@ class VideoSegmentationDataset(data.IterableDataset):
                 masks = torch.from_numpy(masks)
                 masks = self.transform(im) / 5
 
-                yield (im, masks), labels
+                yield (im, masks, *torch.tensor_split(labels[0:5])), torch.tensor_split(
+                    labels[5:]
+                )
 
     def __iter__(self):
         return self.generator()
